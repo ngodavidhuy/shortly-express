@@ -21,21 +21,34 @@ app.use(Auth.createSession);
 
 
 app.get('/', (req, res) => {
-  res.render('login');
+  if (req.session.user) {
+    res.render('index');
+  } else {
+    console.log('11111111111111111111');
+    res.redirect('/login');
+  }
 });
 
 app.get('/create', (req, res) => {
-  res.render('index');
+  if (req.session.user) {
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.get('/links', (req, res, next) => {
-  models.Links.getAll()
-    .then(links => {
-      res.status(200).send(links);
-    })
-    .error(error => {
-      res.status(500).send(error);
-    });
+  if (req.session.user) {
+    models.Links.getAll()
+      .then(links => {
+        res.status(200).send(links);
+      })
+      .error(error => {
+        res.status(500).send(error);
+      });
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.post('/links', (req, res, next) => {
@@ -76,6 +89,10 @@ app.post('/links', (req, res, next) => {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
+
 app.post('/signup', (req, res) => {
   models.Users.get({username: req.body.username})
     .then(user => {
@@ -92,6 +109,9 @@ app.post('/signup', (req, res) => {
           });
       }
     });
+});
+app.get('/login', (req, res) => {
+  res.render('login');
 });
 
 app.post('/login', (req, res) => {
