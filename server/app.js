@@ -5,6 +5,7 @@ const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
+const cookieParser = require('./middleware/cookieParser');
 
 const app = express();
 
@@ -15,20 +16,19 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
+app.use(cookieParser);
+app.use(Auth.createSession);
 
 
-app.get('/', 
-(req, res) => {
+app.get('/', (req, res) => {
+  res.render('login');
+});
+
+app.get('/create', (req, res) => {
   res.render('index');
 });
 
-app.get('/create', 
-(req, res) => {
-  res.render('index');
-});
-
-app.get('/links', 
-(req, res, next) => {
+app.get('/links', (req, res, next) => {
   models.Links.getAll()
     .then(links => {
       res.status(200).send(links);
@@ -38,8 +38,7 @@ app.get('/links',
     });
 });
 
-app.post('/links', 
-(req, res, next) => {
+app.post('/links', (req, res, next) => {
   var url = req.body.url;
   if (!models.Links.isValidUrl(url)) {
     // send back a 404 if link is not valid
@@ -77,7 +76,37 @@ app.post('/links',
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.post('/signup', (req, res) => {
+  models.Users.get({username: req.body.username})
+    .then(user => {
+      if (user !== undefined) {
+        res.redirect('/signup');
+      } else {
+        models.Users.create({
+          username: req.body.username,
+          password: req.body.password
+        });
+        res.redirect('/');
+      }
+    });
+});
 
+app.post('/login', (req, res) => {
+  models.Users.get({username: req.body.username})
+    .then(user => {
+      if (user !== undefined) {
+        let passwordCheck = models.Users.compare(req.body.password, user.password, user.salt);
+        if (passwordCheck) {
+          res.redirect('/');
+        } else {
+          res.redirect('/login');
+        }
+      } else {
+        res.redirect('/login');
+      }
+      
+    });
+});
 
 
 /************************************************************/
