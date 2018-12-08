@@ -85,8 +85,11 @@ app.post('/signup', (req, res) => {
         models.Users.create({
           username: req.body.username,
           password: req.body.password
-        });
-        res.redirect('/');
+        })
+          .then(user => {
+            Auth.updateSession(user.insertId, req.session.hash);
+            res.redirect('/');
+          });
       }
     });
 });
@@ -108,6 +111,12 @@ app.post('/login', (req, res) => {
     });
 });
 
+app.get('/logout', (req, res) => {
+  models.Sessions.delete({hash: req.session.hash})
+    .then(() => {
+      res.redirect('/login');
+    });
+});
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
