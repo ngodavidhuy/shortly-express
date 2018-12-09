@@ -20,35 +20,22 @@ app.use(cookieParser);
 app.use(Auth.createSession);
 
 
-app.get('/', (req, res) => {
-  if (req.session.user) {
-    res.render('index');
-  } else {
-    console.log('11111111111111111111');
-    res.redirect('/login');
-  }
+app.get('/', Auth.verifySession, (req, res) => {
+  res.render('index');
 });
 
-app.get('/create', (req, res) => {
-  if (req.session.user) {
-    res.render('index');
-  } else {
-    res.redirect('/login');
-  }
+app.get('/create', Auth.verifySession, (req, res) => {
+  res.render('index');
 });
 
-app.get('/links', (req, res, next) => {
-  if (req.session.user) {
-    models.Links.getAll()
-      .then(links => {
-        res.status(200).send(links);
-      })
-      .error(error => {
-        res.status(500).send(error);
-      });
-  } else {
-    res.redirect('/login');
-  }
+app.get('/links', Auth.verifySession, (req, res, next) => {
+  models.Links.getAll()
+    .then(links => {
+      res.status(200).send(links);
+    })
+    .error(error => {
+      res.status(500).send(error);
+    });
 });
 
 app.post('/links', (req, res, next) => {
@@ -127,7 +114,6 @@ app.post('/login', (req, res) => {
       } else {
         res.redirect('/login');
       }
-      
     });
 });
 
