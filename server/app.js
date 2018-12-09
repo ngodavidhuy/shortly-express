@@ -85,6 +85,8 @@ app.post('/signup', (req, res) => {
     .then(user => {
       if (user !== undefined) {
         res.redirect('/signup');
+      } else if (req.body.username.length < 1 || req.body.password.length < 1) {
+        throw new Error('Invalid username or password. Can\'t be empty.');
       } else {
         models.Users.create({
           username: req.body.username,
@@ -95,6 +97,9 @@ app.post('/signup', (req, res) => {
             res.redirect('/');
           });
       }
+    }).catch(err => {
+      console.log(err);
+      res.redirect('/signup');
     });
 });
 app.get('/login', (req, res) => {
@@ -104,16 +109,23 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   models.Users.get({username: req.body.username})
     .then(user => {
-      if (user !== undefined) {
-        let passwordCheck = models.Users.compare(req.body.password, user.password, user.salt);
-        if (passwordCheck) {
-          res.redirect('/');
-        } else {
-          res.redirect('/login');
-        }
-      } else {
-        res.redirect('/login');
+      if (user === undefined) {
+        throw new Error('User does not exist');
       }
+      return user;
+    })
+    .then(user => {
+      let passwordCheck = models.Users.compare(req.body.password, user.password, user.salt);
+      if (passwordCheck) {
+        Auth.updateSession(user.id, req.session.hash);
+        res.redirect('/');
+      } else {
+        throw new Error('Invalid password');
+      }
+    })
+    .catch(err => {
+      console.log(err);
+      res.redirect('/login');
     });
 });
 

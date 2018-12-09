@@ -206,6 +206,67 @@ describe('', function() {
         done();
       });
     });
+
+    it('Prevents users from signing up with both empty username and pw fields', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': '',
+          'password': ''
+        }
+      };
+
+      request(options, function(error, res, body) {
+        var queryString = 'SELECT * FROM users where username = ""';
+        db.query(queryString, function(err, rows) {
+          if (err) { done(err); }
+          expect(rows.length).to.equal(0);
+          done();
+        });
+      });
+    });
+
+    it('Prevents users from signing up with empty username', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': '',
+          'password': 'password'
+        }
+      };
+
+      request(options, function(error, res, body) {
+        var queryString = 'SELECT * FROM users where username = ""';
+        db.query(queryString, function(err, rows) {
+          if (err) { done(err); }
+          expect(rows.length).to.equal(0);
+          done();
+        });
+      });
+    });
+
+    it('Prevents users from signing up with empty password', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': 'betaUser',
+          'password': ''
+        }
+      };
+
+      request(options, function(error, res, body) {
+        var queryString = 'SELECT * FROM users where username = "betaUser"';
+        db.query(queryString, function(err, rows) {
+          if (err) { done(err); }
+          expect(rows.length).to.equal(0);
+          done();
+        });
+      });
+    });
+
   });
 
   describe('Account Login:', function() {
@@ -377,7 +438,6 @@ describe('', function() {
         var response = httpMocks.createResponse();
         createSession(requestWithoutCookies, response, function() {
           var session = requestWithoutCookies.session;
-          //console.log(requestWithoutCookies, 'made a session already');
           expect(session).to.exist;
           expect(session).to.be.an('object');
           expect(session.hash).to.exist;
@@ -391,7 +451,6 @@ describe('', function() {
 
         createSession(requestWithoutCookie, response, function() {
           var cookies = response.cookies;
-          //console.log(response);
           expect(cookies['shortlyid']).to.exist;
           expect(cookies['shortlyid'].value).to.exist;
           done();
@@ -453,9 +512,9 @@ describe('', function() {
               var requestWithCookies = httpMocks.createRequest();
               requestWithCookies.cookies.shortlyid = hash;
 
+
               createSession(requestWithCookies, secondResponse, function() {
                 var session = requestWithCookies.session;
-                // console.log(session, 'TEST SESSION!!!');
                 expect(session).to.be.an('object');
                 expect(session.user.username).to.eq(username);
                 expect(session.userId).to.eq(userId);
@@ -474,8 +533,6 @@ describe('', function() {
 
         createSession(requestWithMaliciousCookie, response, function() {
           var cookie = response.cookies.shortlyid;
-          // console.log('BAD COOKIE ERROR ERROR ERROR', maliciousCookieHash);
-          // console.log('GOOD COOKIE ********************', cookie);
           expect(cookie).to.exist;
           expect(cookie).to.not.equal(maliciousCookieHash);
           done();
@@ -766,4 +823,6 @@ describe('', function() {
       });
     });
   });
+
+  
 });
